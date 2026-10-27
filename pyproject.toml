@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]                 # 77+ is needed for `license = "MIT"` (SPDX string)
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simplibs-serialize"
+version = "0.1.0"
+description = "Objects out, typed objects back: serialize any Python object to plain JSON-compatible data and build typed objects from it — the annotation is the schema, and every failure says exactly where — as plain functions, JSON text and files, composable rules and pipeline actions."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"                        # the README badge and "Requires Python" must say the same
+keywords = [
+    "serialize",
+    "serialization",
+    "deserialize",
+    "deserialization",
+    "json",
+    "dataclass",
+    "typing",
+    "type-hints",
+    "schema",
+    "round-trip",
+    "converter",
+    "simplibs",
+    "simplibs-serialize",
+    "developer-tools",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: File Formats :: JSON",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "simplibs-exception>=1.1.4",                  # structured cards (ParamError, ConversionError and the base of every error here)
+    "simplibs-validate>=0.3.2",                   # @validate_call on the public functions, the rule checks of Annotated
+    "simplibs-rules>=0.4.0",                      # Rule: IsSerializable, IsDeserializable; IsTyping
+    "simplibs-actions>=0.2.2",                    # create_action: the Action classes
+    "simplibs-file>=0.1.0",                       # write_json and read_json behind the JSON file functions; EncodingName
+    "simplibs-path>=0.1.1",                       # PathLike for the file functions
+    "simplibs-sentinels>=0.1.0",                  # UNSET in simplibs.serialize.testing
+]
+
+[[project.authors]]
+name = "Dalibor Sova (Sudip2708)"
+email = "daliborsova@seznam.cz"
+
+[project.urls]
+Homepage = "https://github.com/simplibs/simplibs-serialize"
+Repository = "https://github.com/simplibs/simplibs-serialize"
+Issues = "https://github.com/simplibs/simplibs-serialize/issues"
+Changelog = "https://github.com/simplibs/simplibs-serialize/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0",          # the `subtests` fixture is built in since pytest 9.0
+    "pytest-cov>=5.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v -rs"                                # -rs lists every skipped test with its reason
+
+[tool.coverage.run]
+branch = true
+source = ["simplibs.serialize"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"simplibs.serialize" = ["py.typed"]               # without this section py.typed is NOT in the wheel
