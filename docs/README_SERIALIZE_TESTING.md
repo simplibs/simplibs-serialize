@@ -22,8 +22,15 @@ use it.
 
 Every check is reported **separately** through `subtests`, so one failing check does not hide the
 others: a handler pair that does not invert each other and a set whose order changes with the run
-are two lines in the report, not one. The function does not raise — a failed check is a failed
-subtest.
+are two lines in the report, not one. With `verbose=True` (the default) the function does not raise — a failed check is a failed
+subtest. With `verbose=False` no subtest is created (`subtests` may then be `None`) and the
+first failed check raises.
+
+## A note on the subtest names
+
+Every name starts with `[annotation]` (`[Config]`, `[list[Point]]`), or with `intro` when it is
+given. Without it, two calls in one test produced identical names and the report could not say
+which value failed.
 
 ## A note on what each check catches
 
@@ -57,12 +64,15 @@ Asserts that a value survives the trip out and back, unchanged.
 
 **Parameters:**
 
-* `subtests` (*Any*): The `subtests` fixture of pytest 9+.
+* `subtests` (*Any*): The `subtests` fixture of pytest 9+. May be `None` when `verbose=False`.
 * `value` (*Any*): The value to send out and back.
 * `annotation` (*TargetType*, default `None`): What to build on the way back. Defaults to `type(value)`; give it for anything whose type is not the whole annotation (`list[Point]`, `dict[str, int | None]`).
 * `strict` (*bool*, keyword-only, default `True`): As for `deserialize`.
 * `compare` (*Callable[[Any, Any], bool] | None*, keyword-only, default `None`): How to tell that the result equals the value. Defaults to `==`; give one for a type without `__eq__`, or whose values never compare equal.
 * `check_json` (*bool*, keyword-only, default `True`): If `False`, only the structure round trip is checked (checks 1 to 3).
+* `verbose` (*bool*, keyword-only, default `True`): If `True`, each check is an isolated subtest; if `False`,
+  no subtest is created and the first failed check raises.
+* `intro` (*str*, keyword-only, default `""`): Prefix of the subtest names, replacing the default `[annotation]`.
 
 **Returns:**
 
@@ -70,7 +80,7 @@ Asserts that a value survives the trip out and back, unchanged.
 
 **Raises:**
 
-* Nothing itself: a failing check is reported as a failed subtest, with the message of the assertion or the card that failed.
+* Nothing itself: a failing check is reported as a failed subtest, with the message of the assertion or the card that failed. With `verbose=False` the first failed check raises instead.
 
 **Example usage:**
 
@@ -117,28 +127,29 @@ never compare equal, needs its own idea of "the same", and the caller is the onl
 # 1. What to build, and how to compare
 target = type(value) if annotation is None else annotation
 same = compare if compare is not None else (lambda left, right: left == right)
+prefix = f"{intro} " if intro else f"[{_name_of(target)}] "     # names the checks
 
 # 2. The way out must give plain, valid JSON data
 data: Any = UNSET
-with subtests.test(msg="serialize returns valid JSON-compatible data"):
+with maybe_subtest(subtests, name=f"{prefix}serialize returns valid JSON-compatible data", verbose=verbose):
     data = serialize(value)
     json.dumps(data, allow_nan=False)
 if data is UNSET:                       # nothing to continue with
     return
 
 # 3. The same value must always give the same data (sets, key order)
-with subtests.test(msg="serialize returns the same data every time"):
+with maybe_subtest(subtests, name=f"{prefix}serialize returns the same data every time", verbose=verbose):
     again = serialize(value)
     assert again == data, f"two calls gave different data:\n{data!r}\n{again!r}"
 
 # 4. The way back must give the value again
-with subtests.test(msg="deserialize(serialize(value)) equals the value"):
+with maybe_subtest(subtests, name=f"{prefix}deserialize(serialize(value)) equals the value", verbose=verbose):
     rebuilt = deserialize(data, target, strict=strict)
     assert same(rebuilt, value), f"expected {value!r}, got {rebuilt!r}"
 
 # 5. The same through JSON text
 if check_json:
-    with subtests.test(msg="from_json(to_json(value)) equals the value"):
+    with maybe_subtest(subtests, name=f"{prefix}from_json(to_json(value)) equals the value", verbose=verbose):
         rebuilt = from_json(to_json(value), target, strict=strict)
         assert same(rebuilt, value), f"expected {value!r}, got {rebuilt!r}"
 ```

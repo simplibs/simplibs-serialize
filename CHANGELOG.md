@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.1] - 2026-11-18
+
+### 🔄 Changed
+
+* **`assert_round_trip` subtest names carry the annotation.** Every name now starts with
+  `[annotation]` (`[Config]`, `[list[Point]]`), or with `intro` when it is given. Two calls in one
+  test used to produce identical names, and a failing report could not say which value failed.
+  **Behavior change** of the testing helper: a test that compares the exact old subtest names has to
+  add the prefix.
+* **`assert_round_trip` goes through `maybe_subtest`**, like `assert_action` and `assert_pattern`:
+  with `verbose=False` no subtest is created (`subtests` may then be `None`) and the first failed
+  check raises at once.
+
+### ✨ Added
+
+* **`assert_round_trip(verbose=..., intro=...)`**: `verbose` (default `True`) and `intro` (replaces the
+  default `[annotation]` prefix of the subtest names).
+
+### 📋 Improved
+
+* **Tests**: nine tests of `assert_round_trip` adjusted to the prefixed names; new tests for the
+  names, `intro` and `verbose=False`.
+
+---
+
 ## [0.1.0] - 2026-10-27
 
 ### ✨ Added
